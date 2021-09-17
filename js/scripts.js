@@ -3,10 +3,10 @@ const api = "https://randomuser.me/api/?results=12&nat=ca";
 let employeelist = [];
 
 fetch(api)
-  .then((res) => res.json())
+  .then(res => res.json())
   .then(profile =>profile.results)
   .then(generateinfo)
-  .catch(error => console.log("Something went wrong!",error))
+  .catch(error => console.log(error))
 
 //Create searchbar and add to the DOM dynamically.
 function createsearchbar(){
@@ -19,10 +19,19 @@ function createsearchbar(){
         searchbar.insertAdjacentHTML('beforeend',element);
 }
 createsearchbar();
+//add search to filter the directory by name.("Exceeds #1")
+function searchSubmit(data) {
+    createsearchbar();
+    const searchForm = document.querySelector('.search-container form');
+    searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+    })
+}
 //Display employee gallery.Create and add basic information to html. 
-const gallery = document.getElementById("gallery");
-function generateinfo() {
-    employeelist.forEach((e,index) =>{
+const gallery = document.querySelector('#gallery');
+function generateinfo(Data) {
+    employeelist = Data
+    Data.forEach((e,index) =>{
         const name = e.name
         const email = e.email
         const city = e.location.city
@@ -34,7 +43,7 @@ function generateinfo() {
                     <img class="card-img" src="${picture}" alt="profile picture">
                 </div>
                 <div class="card-info-container">
-                    <h3 id="name" class="card-name cap">>${name.first} ${name.last}</h3>
+                    <h3 id="name" class="card-name cap">${name.first} ${name.last}</h3>
                     <p class="card-text">${email}</p>
                     <p class="card-text cap">${city}, ${state}</p>
                 </div>
@@ -42,37 +51,73 @@ function generateinfo() {
                 gallery.insertAdjacentHTML('beforeend', searchbarHTML);
     })
 }
-generateinfo();
-//Regex cell and dob.
+
+//Regex DOB.
+function formatdob(dob) {
+    const year = dob.date.slice(0,4);
+    const month = dob.date.slice(5,7)
+    const day = dob.date.slice(8,10);
+
+    return `${day}.${month}.${year}`;
+}
 //Display modal.
 const body = document.querySelector("body");
-function displaymodal(employee,index){
-    const picture = employee.picture.large;
-    const name = `${employee.name.first} ${employee.name.last}`;
-    const email = employee.email;
-    const city = employee.location.city;
-    const state = employee.location.state;
-    const address = `${employee.location.street.number} ${employee.location.street.name}, ${city}, ${state}, ${employee.location.postcode}`;
-    const regexCell = /^\D*(\d{3})\D*(\d{3})\D*(\d{4})\D*$/
-    let cellFormat = (employee.cell).replace(regexCell, '($1) $2-$3')
-    const regexDate = /(\d{4})-(\d{2})-(\d{2}).*/
-    let dobFormat = (employee.dob.date).replace(regexDate, '$2/$3/$1')
+let Index = 0;
+function displaymodal(index){
+    const {name, email, location, cell, dob, picture} = employeelist[index];
+    let DOB = formatdob(dob);
+    const regexCell = /^\D(\d{3})\D(\d{3})\D(\d{4})\D$/
+    const cellFormat = cell.replace(regexCell, '($1) $2-$3')
+
     addDiv = 
-    `<div class="modal-container">
+    `<div class="modal-container" data-index="${index}">
         <div class="modal">
             <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
             <div class="modal-info-container">
-                <img class="modal-img" src=${picture} alt="profile picture">
-                <h3 id="name" class="modal-name cap">${name}</h3>
+                <img class="modal-img" src="${picture.large}" alt="profile picture">
+                <h3 id="name" class="modal-name cap">${name.first} ${name.last}</h3>
                 <p class="modal-text">${email}</p>
-                <p class="modal-text cap">${address}</p>
+                <p class="modal-text cap">${location.city}</p>
                 <hr>
                 <p class="modal-text">${cellFormat}</p>
-                <p class="modal-text">${employee.location.street.number} ${employee.location.street.name}, ${employee.location.city}, ${employee.location.state} ${employee.location.postcode}</p>
-                <p class="modal-text">Birthday: ${dobFormat}</p>
+                <p class="modal-text">${location.street.number} ${location.street.name}, ${location.city}, ${location.state} ${location.postcode}</p>
+                <p class="modal-text">Birthday: ${DOB}</p>
+                <div class="modal-btn-container">
+                    <button type="button" id="modal-prev" class="modal-prev btn">Prev</button>
+                    <button type="button" id="modal-next" class="modal-next btn">Next</button>
         </div>
     </div>`;
-          body.insertAdjacentHTML('beforeend', addDiv);
+//Add the modal HTML inside of body.
+    body.insertAdjacentHTML('beforeend', addDiv);
+//remove current modal container when clicking the close button.
+    const closebtn = document.getElementById('modal-close-btn');
+    const modalcontainer = document.querySelector('.modal-container');
+        closebtn.addEventListener('click', () => {
+        modalcontainer.remove();
+        })
+    //Set up next, previous and container buttons.("Exceeds #2")
+    const btnPrev = document.getElementById('modal-prev');
+    const btnNext = document.getElementById('modal-next');
+    const btnmodal = document.querySelector('.modal-btn-container');
+
+        btnmodal.addEventListener('click', (e) => {
+            if (e.target == btnNext && Index < employeelist.length - 1) {
+                Index++
+            } else if (e.target == btnNext && Index == employeelist.length - 1) {
+                Index = 0
+            } else if (e.target == btnPrev && Index > 0) {
+                Index--
+            }else if (e.target == btnPrev && Index == 0) {
+                Index = employeelist.length -1
+            }
+            document.body.removeChild(document.body.lastElementChild);
+            displaymodal(Index);
+        })
 }
-displaymodal();
-//Click 'x' to close the modal page.
+//Click employee image to show the profile modal.
+gallery.addEventListener('click', (e) => {
+    const card = e.target.closest('.card');
+    const index = card.getAttribute('data-index');
+    Index = index
+    displaymodal(Index);
+})
