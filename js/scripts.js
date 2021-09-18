@@ -8,25 +8,6 @@ fetch(api)
   .then(generateinfo)
   .catch(error => console.log(error))
 
-//Create searchbar and add to the DOM dynamically.
-function createsearchbar(){
-    const searchbar = document.querySelector(".search-container");
-    const element = 
-    `<form action="#" method="get">
-        <input type="search" id="search-input" class="search-input" placeholder="Search...">
-        <input type="submit" value="&#x1F50D;" id="search-submit" class="search-submit">
-    </form>`;
-        searchbar.insertAdjacentHTML('beforeend',element);
-}
-createsearchbar();
-//add search to filter the directory by name.("Exceeds #1")
-function searchSubmit(data) {
-    createsearchbar();
-    const searchForm = document.querySelector('.search-container form');
-    searchForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-    })
-}
 //Display employee gallery.Create and add basic information to html. 
 const gallery = document.querySelector('#gallery');
 function generateinfo(Data) {
@@ -87,9 +68,9 @@ function displaymodal(index){
                     <button type="button" id="modal-next" class="modal-next btn">Next</button>
         </div>
     </div>`;
-//Add the modal HTML inside of body.
+    //Add the modal HTML inside of body.
     body.insertAdjacentHTML('beforeend', addDiv);
-//remove current modal container when clicking the close button.
+    //remove current modal container when clicking the close button.
     const closebtn = document.getElementById('modal-close-btn');
     const modalcontainer = document.querySelector('.modal-container');
         closebtn.addEventListener('click', () => {
@@ -111,6 +92,7 @@ function displaymodal(index){
                 Index = employeelist.length -1
             }
             document.body.removeChild(document.body.lastElementChild);
+            //Another way to remove the last modal 'document.querySelector('.modal-container').remove();'
             displaymodal(Index);
         })
 }
@@ -121,3 +103,31 @@ gallery.addEventListener('click', (e) => {
     Index = index
     displaymodal(Index);
 })
+//Create searchbar and add to the DOM dynamically.
+const searchbar = document.querySelector(".search-container");
+function createsearchbar(){
+    const element = 
+    `<form action="#" method="get">
+        <input type="search" id="search-input" class="search-input" placeholder="Search...">
+        <input type="submit" value="&#x1F50D;" id="search-submit" class="search-submit">
+    </form>`;
+        searchbar.insertAdjacentHTML('beforeend',element);
+}
+createsearchbar();
+//Search partial infomation to filter the directory by name.("Exceeds #1")
+const submitbtn = document.getElementById('search-submit');
+
+searchbar.addEventListener('keyup', e => {
+    e.preventDefault();
+    searchInput = document.getElementById('search-input').value.toLowerCase();
+  
+    for(let i = 0; i < gallery.children.length; i++) {
+        let showpage = gallery.children[i].children[1].children[0].textContent.toLowerCase();
+        if(showpage.includes(searchInput)) {
+          gallery.children[i].setAttribute('style', 'display: flex')
+        } else if(!(showpage.includes(searchInput))) {
+          gallery.children[i].setAttribute('style', 'display: none')
+        }
+      
+    }
+});
